@@ -5,14 +5,16 @@ use std::sync::mpsc::{Receiver, channel};
 use std::thread;
 
 use eframe::egui;
+use image::DynamicImage;
 
 use crate::apple;
 use crate::device::{ConnectionMode, DeviceInfo, DeviceTransport, list_connected_devices};
-use crate::flasher::{flash_passcode_theme, flash_wallet_skin};
-use crate::image_skin::PreparedSkin;
+use crate::flasher::{flash_passcode_theme, flash_wallet_skin, restore_wallet_original};
+use crate::image_skin::{PreparedSkin, crop_uv_for_card};
 use crate::i18n::Language;
 use crate::passthm::{PasscodeTheme, parse_passthm_file};
 use crate::scanner::{SavedCard, load_saved_cards, scan_syslog_for_cards};
+use crate::wallet_backup::backup_exists;
 
 #[derive(PartialEq, Eq)]
 enum AppTab {
@@ -75,8 +77,11 @@ pub struct AirCardApp {
     card_hash: String,
     saved_cards: Vec<SavedCard>,
     source_path: Option<PathBuf>,
+    source_image: Option<DynamicImage>,
+    source_texture: Option<egui::TextureHandle>,
+    crop_focus: [f32; 2],
+    crop_dirty: bool,
     skin: Option<PreparedSkin>,
-    skin_texture: Option<egui::TextureHandle>,
     scanning_syslog: bool,
     scan_stop_flag: Option<Arc<AtomicBool>>,
 
@@ -123,8 +128,11 @@ impl AirCardApp {
             card_hash: String::new(),
             saved_cards: load_saved_cards(),
             source_path: None,
+            source_image: None,
+            source_texture: None,
+            crop_focus: [0.5, 0.5],
+            crop_dirty: false,
             skin: None,
-            skin_texture: None,
             scanning_syslog: false,
             scan_stop_flag: None,
 
@@ -274,32 +282,86 @@ impl AirCardApp {
         };
 
         self.add_log(format!("Opening skin image: {}", path.display()));
-        match PreparedSkin::from_path(&path) {
-            Ok(skin) => {
+        match image::open(&path) {
+            Ok(source_image) => {
+                let source_width = source_image.width();
+                let source_height = source_image.height();
+                let skin = match PreparedSkin::from_image_with_focus(
+                    source_image.clone(),
+                    0.5,
+                    0.5,
+                ) {
+                    Ok(skin) => skin,
+                    Err(error) => {
+                        self.add_log(format!("Image preparation failed: {error:#}"));
+                        self.status_msg = format!("Could not prepare image: {error:#}");
+                        return;
+                    }
+                };
+                let source_rgba = source_image.thumbnail(2048, 2048).to_rgba8();
+                let source_preview = egui::ColorImage::from_rgba_unmultiplied(
+                    [source_rgba.width() as usize, source_rgba.height() as usize],
+                    source_rgba.as_raw(),
+                );
+
                 self.add_log(format!(
                     "Skin processed: source {}x{} resampled to 1536x969 PNG ({:.1} KB)",
                     skin.source_width,
                     skin.source_height,
                     skin.png.len() as f32 / 1024.0,
                 ));
-                self.skin_texture = Some(ctx.load_texture(
-                    "card-skin-preview",
-                    skin.preview.clone(),
+                self.source_texture = Some(ctx.load_texture(
+                    "card-skin-source-preview",
+                    source_preview,
                     egui::TextureOptions::LINEAR,
                 ));
                 self.status_msg = format!(
                     "Prepared {} ({}x{} -> 1536x969 PNG, {:.1} KB)",
                     path.file_name().and_then(|n| n.to_str()).unwrap_or("image"),
-                    skin.source_width,
-                    skin.source_height,
+                    source_width,
+                    source_height,
                     skin.png.len() as f32 / 1024.0,
                 );
                 self.source_path = Some(path);
+                self.source_image = Some(source_image);
+                self.crop_focus = [0.5, 0.5];
+                self.crop_dirty = false;
                 self.skin = Some(skin);
             }
             Err(error) => {
-                self.add_log(format!("Image preparation failed: {error:#}"));
-                self.status_msg = format!("Could not prepare image: {error:#}");
+                self.add_log(format!("Image decode failed: {error:#}"));
+                self.status_msg = format!("Could not decode image: {error:#}");
+            }
+        }
+    }
+
+    fn rebuild_skin_from_source(&mut self) {
+        let Some(source_image) = self.source_image.as_ref() else {
+            return;
+        };
+
+        match PreparedSkin::from_image_with_focus(
+            source_image.clone(),
+            self.crop_focus[0],
+            self.crop_focus[1],
+        ) {
+            Ok(skin) => {
+                self.add_log(format!(
+                    "Crop updated: focus ({:.2}, {:.2}), prepared PNG {:.1} KB",
+                    self.crop_focus[0],
+                    self.crop_focus[1],
+                    skin.png.len() as f32 / 1024.0,
+                ));
+                self.skin = Some(skin);
+                self.crop_dirty = false;
+                self.status_msg = self
+                    .language
+                    .text("Crop position updated.")
+                    .to_string();
+            }
+            Err(error) => {
+                self.add_log(format!("Crop preparation failed: {error:#}"));
+                self.status_msg = format!("Could not update crop: {error:#}");
             }
         }
     }
@@ -457,6 +519,89 @@ impl AirCardApp {
                     let _ = tx.send(BackgroundTaskMessage::Done(Ok(
                         language
                             .text("Card skin successfully flashed! Force quit Wallet on iPhone and reopen it.")
+                            .into(),
+                    )));
+                }
+                Err(e) => {
+                    let _ = tx.send(BackgroundTaskMessage::Done(Err(format!("{:#}", e))));
+                }
+            }
+        });
+    }
+
+    fn restore_original_card(&mut self) {
+        if !self.validate_selected_transport("Restore original card") {
+            return;
+        }
+        let Some(udid) = self.selected_udid.clone() else {
+            return;
+        };
+        let hash = self.card_hash.trim().to_string();
+        if hash.is_empty() {
+            self.add_log("Restore failed: Target card hash is empty.");
+            self.status_msg = self
+                .language
+                .text("Please enter or scan a target card hash.")
+                .to_string();
+            return;
+        }
+        if !backup_exists(&udid, &hash) {
+            self.add_log("Restore failed: Original card face backup not found.");
+            self.status_msg = self
+                .language
+                .text("Original card backup not found.")
+                .to_string();
+            return;
+        }
+
+        if let Some(ref flag) = self.scan_stop_flag {
+            flag.store(true, Ordering::Relaxed);
+        }
+        self.scanning_syslog = false;
+        self.is_busy = true;
+        self.progress_step = 0;
+        self.progress_total = 3;
+        self.progress_msg = "Restoring original card face...".to_string();
+        self.status_msg = self
+            .language
+            .text("Restoring original card face...")
+            .to_string();
+        let connection_mode = self.connection_mode;
+        let language = self.language;
+        self.add_log(format!(
+            "Starting original card face restore for hash: {} (UDID: {}, transport: {})",
+            hash,
+            udid,
+            connection_mode.label()
+        ));
+
+        let (tx, rx) = channel();
+        self.task_rx = Some(rx);
+
+        thread::spawn(move || {
+            let tx_progress = tx.clone();
+            let tx_log = tx.clone();
+            let res = restore_wallet_original(
+                &udid,
+                connection_mode,
+                &hash,
+                move |step, total, msg| {
+                    let _ = tx_progress.send(BackgroundTaskMessage::Progress {
+                        step,
+                        total,
+                        message: msg.to_string(),
+                    });
+                },
+                move |msg| {
+                    let _ = tx_log.send(BackgroundTaskMessage::Log(msg.to_string()));
+                },
+            );
+
+            match res {
+                Ok(()) => {
+                    let _ = tx.send(BackgroundTaskMessage::Done(Ok(
+                        language
+                            .text("Original card face restored. Force close Wallet and reopen it.")
                             .into(),
                     )));
                 }
@@ -1215,6 +1360,7 @@ impl AirCardApp {
                 // Card Skin
                 ui.label(egui::RichText::new(language.text("Card Skin Artwork")).strong().size(12.0).color(md3::ON_SURFACE));
                 ui.label(egui::RichText::new(language.text("PNG, JPG, WebP - auto-scaled to 1536x969")).size(11.0).color(md3::ON_SURFACE_VARIANT));
+                ui.label(egui::RichText::new(language.text("Drag inside the preview to reposition the crop.")).size(11.0).color(md3::ON_SURFACE_VARIANT));
                 ui.add_space(4.0);
                 ui.horizontal(|ui| {
                     if m3_button_filled(ui, language.text("Choose Image...")) { self.select_skin(ctx); }
@@ -1259,6 +1405,27 @@ impl AirCardApp {
                     if !r.is_empty() { resp.on_disabled_hover_text(format!("{}{}", language.text("Need: "), r.join(", "))); }
                 }
 
+                ui.add_space(8.0);
+                let can_restore = !self.is_busy
+                    && !self.scanning_syslog
+                    && self.selected_transport_available()
+                    && !self.card_hash.trim().is_empty()
+                    && self.selected_udid.as_ref().is_some_and(|udid| {
+                        backup_exists(udid, self.card_hash.trim())
+                    });
+                let restore_btn = egui::Button::new(
+                    egui::RichText::new(language.text("Restore Original")).strong().size(13.0)
+                        .color(if can_restore { md3::ON_SECONDARY_CONTAINER } else { md3::ON_SURFACE_VARIANT }),
+                )
+                .fill(if can_restore { md3::SECONDARY_CONTAINER } else { md3::SURFACE_CONTAINER_HIGH })
+                .corner_radius(20).stroke(egui::Stroke::NONE)
+                .min_size(egui::vec2(ui.available_width(), 36.0));
+                let restore_resp = ui.add_enabled(can_restore, restore_btn);
+                if restore_resp.clicked() { self.restore_original_card(); }
+                if !can_restore && !self.card_hash.trim().is_empty() {
+                    restore_resp.on_disabled_hover_text(language.text("Apply a card skin once to create an original backup."));
+                }
+
                 if self.is_busy {
                     ui.add_space(8.0);
                     if self.progress_total > 0 {
@@ -1279,11 +1446,57 @@ impl AirCardApp {
                 let pass_w = (ui.available_width() - 8.0).clamp(250.0, 400.0);
                 let pass_h = pass_w * (969.0 / 1536.0);
                 ui.vertical_centered(|ui| {
-                    let (rect, _) = ui.allocate_exact_size(egui::vec2(pass_w, pass_h), egui::Sense::hover());
+                    let (rect, response) =
+                        ui.allocate_exact_size(egui::vec2(pass_w, pass_h), egui::Sense::drag());
+                    let source_dimensions = self
+                        .source_image
+                        .as_ref()
+                        .map(|image| (image.width(), image.height()));
+                    if response.dragged() {
+                        if let Some((source_width, source_height)) = source_dimensions {
+                            let crop_uv = crop_uv_for_card(
+                                source_width,
+                                source_height,
+                                self.crop_focus[0],
+                                self.crop_focus[1],
+                            );
+                            let visible_width = crop_uv[2] - crop_uv[0];
+                            let visible_height = crop_uv[3] - crop_uv[1];
+                            if rect.width() > 0.0 {
+                                self.crop_focus[0] = (self.crop_focus[0]
+                                    - response.drag_motion().x / rect.width()
+                                        * (1.0 - visible_width))
+                                    .clamp(0.0, 1.0);
+                            }
+                            if rect.height() > 0.0 {
+                                self.crop_focus[1] = (self.crop_focus[1]
+                                    - response.drag_motion().y / rect.height()
+                                        * (1.0 - visible_height))
+                                    .clamp(0.0, 1.0);
+                            }
+                            self.crop_dirty = true;
+                            ctx.request_repaint();
+                        }
+                    }
+                    if response.drag_stopped() && self.crop_dirty {
+                        self.rebuild_skin_from_source();
+                    }
+
                     let painter = ui.painter();
-                    if let Some(tex) = self.skin_texture.as_ref() {
+                    if let (Some(tex), Some((source_width, source_height))) =
+                        (self.source_texture.as_ref(), source_dimensions)
+                    {
+                        let crop_uv = crop_uv_for_card(
+                            source_width,
+                            source_height,
+                            self.crop_focus[0],
+                            self.crop_focus[1],
+                        );
                         painter.image(tex.id(), rect,
-                            egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                            egui::Rect::from_min_max(
+                                egui::pos2(crop_uv[0], crop_uv[1]),
+                                egui::pos2(crop_uv[2], crop_uv[3]),
+                            ),
                             egui::Color32::WHITE);
                         painter.rect_stroke(rect, 16.0,
                             egui::Stroke::new(1.0_f32, egui::Color32::from_rgba_premultiplied(255, 255, 255, 30)),
