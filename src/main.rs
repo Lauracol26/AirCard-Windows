@@ -8,8 +8,10 @@ mod apple;
 mod device;
 mod flasher;
 mod image_skin;
+mod i18n;
 mod passthm;
 mod scanner;
+mod wallet_backup;
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
