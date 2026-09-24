@@ -240,12 +240,21 @@ where
     F: FnMut(usize, usize, &str),
     L: FnMut(&str),
 {
-    let pkpass_dir = format!("/var/mobile/Library/Passes/Cards/{}.pkpass", card_hash);
+    anyhow::ensure!(
+        crate::scanner::is_valid_card_hash(card_hash),
+        "Invalid Wallet card path identifier"
+    );
 
     log(&format!("Target Card Hash: {}", card_hash));
-    log(&format!("Skin payload size: {} bytes PNG, {} bytes PDF", skin_png.len(), skin_pdf.len()));
-    capture_original_card(udid, connection_mode, card_hash, &mut log)
-        .context("Failed to preserve the original Wallet card face")?;
+    log(&format!(
+        "Skin payload size: {} bytes PNG, {} bytes PDF",
+        skin_png.len(),
+        skin_pdf.len()
+    ));
+    let resolved_hash = capture_original_card(udid, connection_mode, card_hash, &mut log)
+        .context("Failed to inspect the original Wallet card face")?
+        .unwrap_or_else(|| card_hash.to_string());
+    let pkpass_dir = format!("/var/mobile/Library/Passes/Cards/{}.pkpass", resolved_hash);
 
     let total_steps = 3;
     progress(1, total_steps, "Writing card artwork assets (@3x, @2x, .pdf)...");
@@ -274,7 +283,7 @@ where
     invalidate_wallet_caches(
         udid,
         connection_mode,
-        card_hash,
+        resolved_hash.as_str(),
         &mut progress,
         &mut log,
     );
